@@ -28,7 +28,7 @@ def main(argv):
                         default='/home/engaclew/DATA/articulatory/lb-de-fr-en-pt-12800-TTS-CORPUS/mels',
                         help='Path to the output folder.')
     parser.add_argument('--config', type=str,
-                        default='/home/engaclew/agent/hifi-gan/config_v1.json',
+                        default='/home/engaclew/agent/hifi-gan/config_16k.json',
                         help='Path to the config file (used for mel extraction).')
     args = parser.parse_args(argv)
 
@@ -44,7 +44,6 @@ def main(argv):
     h = AttrDict(json_config)
     out_path.mkdir(parents=True, exist_ok=True)
     for wav_file in tqdm(data_path.glob('*.wav')):
-        print(wav_file)
         audio, sampling_rate = load_wav(wav_file)
         audio = audio / MAX_WAV_VALUE
         audio = torch.FloatTensor(audio).unsqueeze(0)

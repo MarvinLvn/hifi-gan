@@ -13,9 +13,9 @@ def main(argv):
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('--data_path', type=str, default='/home/engaclew/DATA/articulatory/lb-de-fr-en-pt-12800-TTS-CORPUS/wavs',
                         help='Path to the data folder.')
-    parser.add_argument('--test_prop', type=int, default=0.1,
+    parser.add_argument('--test_prop', type=float, default=0.1,
                         help='Proportion of the test set not used in training.')
-    parser.add_argument('--val_prop', type=int, default=0.1,
+    parser.add_argument('--val_prop', type=float, default=0.1,
                         help='Proportion of the val set not used in training.')
     args = parser.parse_args(argv)
 

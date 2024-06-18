@@ -26,56 +26,46 @@ Visit our [demo website](https://jik876.github.io/hifi-gan-demo/) for audio samp
 1. Python >= 3.6
 2. Clone this repository.
 3. Install python requirements. Please refer [requirements.txt](requirements.txt)
-4. Download and extract the [LJ Speech dataset](https://keithito.com/LJ-Speech-Dataset/).
-And move all wav files to `LJSpeech-1.1/wavs`
+4. Download and extract this [multi-speaker/multi-lingual dataset](https://huggingface.co/datasets/mbarnig/lb-de-fr-en-pt-12800-TTS-CORPUS).
+And move all wav files to `/my/path/lb-de-fr-en-pt-12800-TTS-CORPUS/wavs`
+5. Download and extract PB2009 (ask Thomas Hueber)
 
 
-## Training
+## A) Training
+
+We'll first train a model on our multi-speaker/multi-lingual dataset.
+
+```sh
+DATA_PATH=/my/path/lb-de-fr-en-pt-12800-TTS-CORPUS
+# 1) Create train/val/test split
+python split_data --data_path ${DATA_PATH}/wavs --test_prop 0.1 --val_prop 0.1
+# 2) Extract mel-spectrograms 
+python extract_mel.py --data_path ${DATA_PATH}/wavs \
+   --out_path ${DATA_PATH}/mels \
+   --config config_16k.json
+# 3) Train HiFi-GAN
+python train.py --input_wavs_dir ${DATA_PATH}/wavs --input_training_file ${DATA_PATH}/train.txt \
+  --input_validation_file ${DATA_PATH}/val.txt --input_mels_dir ${DATA_PATH}/mels \
+  --config config_16k.json
 ```
-python train.py --config config_v1.json
+
+Checkpoints and copy of the configuration will be saved in `cp_hifigan`.
+
+### B) Fine-tuning
+
+We'll fine-tune it on PB2009
+
+```sh
+DATA_PATH=/linkhome/rech/genscp01/uow84uh/agent/datasets/pb2009
+# 1) Create train/val/test split
+python split_data.py --data_path ${DATA_PATH}/wav --test_prop 0.1 --val_prop 0.1
+# 2) Extract mel-spectrogram
+# You can use the same instruction as above, but should already be generated using preprocess_datasets.py
+# 2) Train HiFi-GAN
+python train.py --input_wavs_dir ${DATA_PATH}/wav --input_training_file ${DATA_PATH}/train.txt \
+  --input_validation_file ${DATA_PATH}/val.txt --input_mels_dir ${DATA_PATH}/mel \
+  --config config_16k.json --fine_tuning True
 ```
-To train V2 or V3 Generator, replace `config_v1.json` with `config_v2.json` or `config_v3.json`.<br>
-Checkpoints and copy of the configuration file are saved in `cp_hifigan` directory by default.<br>
-You can change the path by adding `--checkpoint_path` option.
-
-Validation loss during training with V1 generator.<br>
-![validation loss](./validation_loss.png)
-
-## Pretrained Model
-You can also use pretrained models we provide.<br/>
-[Download pretrained models](https://drive.google.com/drive/folders/1-eEYTB5Av9jNql0WGBlRoi-WH2J7bp5Y?usp=sharing)<br/> 
-Details of each folder are as in follows:
-
-|Folder Name|Generator|Dataset|Fine-Tuned|
-|------|---|---|---|
-|LJ_V1|V1|LJSpeech|No|
-|LJ_V2|V2|LJSpeech|No|
-|LJ_V3|V3|LJSpeech|No|
-|LJ_FT_T2_V1|V1|LJSpeech|Yes ([Tacotron2](https://github.com/NVIDIA/tacotron2))|
-|LJ_FT_T2_V2|V2|LJSpeech|Yes ([Tacotron2](https://github.com/NVIDIA/tacotron2))|
-|LJ_FT_T2_V3|V3|LJSpeech|Yes ([Tacotron2](https://github.com/NVIDIA/tacotron2))|
-|VCTK_V1|V1|VCTK|No|
-|VCTK_V2|V2|VCTK|No|
-|VCTK_V3|V3|VCTK|No|
-|UNIVERSAL_V1|V1|Universal|No|
-
-We provide the universal model with discriminator weights that can be used as a base for transfer learning to other datasets.
-
-## Fine-Tuning
-1. Generate mel-spectrograms in numpy format using [Tacotron2](https://github.com/NVIDIA/tacotron2) with teacher-forcing.<br/>
-The file name of the generated mel-spectrogram should match the audio file and the extension should be `.npy`.<br/>
-Example:
-    ```
-    Audio File : LJ001-0001.wav
-    Mel-Spectrogram File : LJ001-0001.npy
-    ```
-2. Create `ft_dataset` folder and copy the generated mel-spectrogram files into it.<br/>
-3. Run the following command.
-    ```
-    python train.py --fine_tuning True --config config_v1.json
-    ```
-    For other command line options, please refer to the training section.
-
 
 ## Inference from wav file
 1. Make `test_files` directory and copy wav files into the directory.
